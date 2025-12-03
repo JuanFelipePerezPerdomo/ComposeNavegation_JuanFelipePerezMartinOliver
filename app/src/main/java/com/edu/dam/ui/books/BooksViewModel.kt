@@ -19,11 +19,11 @@ class BooksViewModel (
 
     fun observeBook(id: String): Flow<Book?> = repository.observeById(id)
 
-    suspend fun addBook(title: String, author: String, numPage: Int, isFavorite: Boolean): Boolean =
-        runCatching { repository.addBook(title, author, numPage, isFavorite) }.isSuccess
+    suspend fun addBook(title: String, author: String, numPage: Int, synopsis: String?, isFavorite: Boolean): Boolean =
+        runCatching { repository.addBook(title, author, numPage,synopsis, isFavorite) }.isSuccess
 
-    suspend fun updateBook(id: String, title: String, numPage: Int): Boolean =
-        runCatching { repository.updateBook(id, title, numPage) }.isSuccess
+    suspend fun updateBook(id: String, title: String, numPage: Int, synopsis: String?): Boolean =
+        runCatching { repository.updateBook(id, title, numPage, synopsis) }.isSuccess
 
     suspend fun toggleFavorite(id: String): Boolean =
         runCatching { repository.toggleFavorite(id) }.isSuccess

@@ -13,8 +13,8 @@ interface BooksRepository {
     fun observeFavorites(): Flow<List<Book>>
     fun observeById(id: String): Flow<Book?>
 
-    suspend fun addBook(title: String, author: String, numPage: Int, isFavorite: Boolean)
-    suspend fun updateBook(id: String, title: String, numPage: Int )
+    suspend fun addBook(title: String, author: String, numPage: Int, synopsis: String?, isFavorite: Boolean)
+    suspend fun updateBook(id: String, title: String, numPage: Int, synopsis: String? )
     suspend fun toggleFavorite(id: String)
     suspend fun deleteBook(id: String)
 }
@@ -36,6 +36,7 @@ class BookRepositoryImpl(
         title: String,
         author: String,
         numPage: Int,
+        synopsis: String?,
         isFavorite: Boolean
     ) {
         val now = System.currentTimeMillis()
@@ -44,6 +45,7 @@ class BookRepositoryImpl(
             title = title,
             author = author,
             numPage = numPage,
+            synopsis = synopsis.orEmpty(),
             createdAt = now,
             updatedAt = now,
             isFavorite = isFavorite
@@ -51,11 +53,12 @@ class BookRepositoryImpl(
         dao.insert(entity)
     }
 
-    override suspend fun updateBook(id: String, title: String, numPage: Int) {
+    override suspend fun updateBook(id: String, title: String, numPage: Int, synopsis: String?) {
         val existing = dao.getById(id).firstOrNull() ?: return
         val updated = existing.copy(
             title = title,
             numPage = numPage,
+            synopsis = synopsis,
             updatedAt = System.currentTimeMillis()
         )
         dao.update(updated)

@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.edu.dam.data.AppState
 import com.edu.dam.data.prefs.UserPrefsRepository
+import com.edu.dam.navigation.NavGraph
+import com.edu.dam.theme.ComposeNavegationJuanFelipePerezMartinOliverTheme
 import com.edu.dam.ui.books.BooksViewModel
 import com.edu.dam.ui.books.BooksViewModelFactory
 
@@ -34,6 +36,10 @@ class MainActivity : ComponentActivity() {
             val savedName = prefs.userNameFlow.collectAsState(initial = "").value
             LaunchedEffect(savedName) {
                 state.userName.value = savedName
+            }
+
+            ComposeNavegationJuanFelipePerezMartinOliverTheme(darkTheme = darkMode) {
+                NavGraph(nav,state, prefs, booksViewModel)
             }
         }
     }

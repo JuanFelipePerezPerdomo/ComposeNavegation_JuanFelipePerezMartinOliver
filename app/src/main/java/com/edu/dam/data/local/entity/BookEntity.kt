@@ -12,6 +12,7 @@ data class BookEntity (
     val title: String,
     val author: String,
     val numPage: Int,
+    val synopsis: String?,
     val createdAt: Long,
     val updatedAt: Long,
     val isFavorite: Boolean
