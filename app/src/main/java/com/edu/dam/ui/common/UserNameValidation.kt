@@ -30,3 +30,15 @@ fun validateUserName(raw: String): UserNameValidation {
         charsetAllowed = charsetOk
     )
 }
+
+@Composable
+fun UserNameSupportingText(validation: UserNameValidation){
+    val count = "${validation.length} / $USERNAME_MAX"
+    val message = when{
+        validation.raw.isEmpty() -> count
+        !validation.lengthAllowed -> "Entre $USERNAME_MIN y $USERNAME_MAX caracteres · $count"
+        !validation.charsetAllowed -> "Solo Letras, Numeros, Espacios, _ y - · $count"
+        else -> count
+    }
+    Text(message)
+}
