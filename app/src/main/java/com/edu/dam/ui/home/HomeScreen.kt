@@ -2,16 +2,25 @@ package com.edu.dam.ui.home
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.edu.dam.data.AppState
@@ -24,7 +33,7 @@ import com.edu.dam.navigation.Login
 import com.edu.dam.ui.books.BooksViewModel
 import com.edu.dam.ui.components.AppBottomBar
 import com.edu.dam.ui.home.components.AddBookSheet
-import com.edu.dam.ui.home.components.SwipeableBookCard
+import com.edu.dam.ui.home.components.BookCard
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -36,7 +45,7 @@ fun HomeScreen(
     prefs: UserPrefsRepository,
     booksViewModel: BooksViewModel,
     onlyFavorites: Boolean = false
-){
+) {
     val name by state.userName.collectAsState()
     val books by booksViewModel.books.collectAsState()
     val sortBy by prefs.sortByFlow.collectAsState(initial = SortBy.DATE)
@@ -54,13 +63,13 @@ fun HomeScreen(
     var newTitle by rememberSaveable { mutableStateOf("") }
     var newAuthor by rememberSaveable { mutableStateOf("") }
     var newBody by rememberSaveable { mutableStateOf("") }
-    var newNumPage by rememberSaveable { mutableStateOf("") }  // ← String para el TextField
+    var newNumPage by rememberSaveable { mutableStateOf("") }
 
     fun resetForm() {
         newTitle = ""
         newAuthor = ""
         newBody = ""
-        newNumPage = ""  // ← Reset a String vacío
+        newNumPage = ""
     }
 
     // Diálogo de bienvenida
@@ -117,7 +126,13 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (!onlyFavorites) {
-                FloatingActionButton(onClick = { showSheet = true }) { Text("+") }
+                FloatingActionButton(
+                    onClick = { showSheet = true },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Text("+", style = MaterialTheme.typography.headlineSmall)
+                }
             }
         },
         bottomBar = { AppBottomBar(nav = nav, current = if (onlyFavorites) Favorites else Home) }
@@ -143,51 +158,89 @@ fun HomeScreen(
                 "Aún no hay libros" to "Pulsa + para crear el primero"
         }
 
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxSize()
         ) {
-            if (sortedBooks.isEmpty()) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(emptyTitle, style = MaterialTheme.typography.titleMedium)
-                        Text(emptySubtitle, style = MaterialTheme.typography.bodyMedium)
+            // ═══════════════════════════════════════════════════════════════
+            // FILTROS - Solo Fecha y Título (sin Favoritos)
+            // ═══════════════════════════════════════════════════════════════
+            FilterChipsRow(
+                currentSortBy = sortBy,
+                onSortByChange = { newSort ->
+                    scope.launch { prefs.setSortBy(newSort) }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
 
-                        if (!onlyFavorites) {
-                            Spacer(Modifier.height(12.dp))
-                            OutlinedButton(onClick = { showSheet = true }) {
-                                Text("Crear libro")
-                            }
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ═══════════════════════════════════════════════════════════════
+            // GRID DE LIBROS - 3 columnas
+            // ═══════════════════════════════════════════════════════════════
+            if (sortedBooks.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 48.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        emptyTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        emptySubtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+
+                    if (!onlyFavorites) {
+                        Spacer(Modifier.height(16.dp))
+                        FilledTonalButton(onClick = { showSheet = true }) {
+                            Text("Crear libro")
                         }
                     }
                 }
             } else {
-                items(
-                    items = sortedBooks,
-                    key = { it.id },
-                    contentType = { "book" }
-                ) { book ->
-                    SwipeableBookCard(
-                        book = book,
-                        onOpen = { nav.navigate(Detail(id = book.id)) },
-                        onToggleFavorite = {
-                            scope.launch {
-                                if (!booksViewModel.toggleFavorite(book.id)) {
-                                    snackbarHostState.showSnackbar("No se pudo guardar")
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(
+                        items = sortedBooks,
+                        key = { it.id }
+                    ) { book ->
+                        BookCard(
+                            book = book,
+                            onOpen = { nav.navigate(Detail(id = book.id)) },
+                            onToggleFavorite = {
+                                scope.launch {
+                                    if (!booksViewModel.toggleFavorite(book.id)) {
+                                        snackbarHostState.showSnackbar("No se pudo guardar")
+                                    }
                                 }
-                            }
-                        },
-                        onSwipeToDelete = { toDeleteId = book.id },
-                        modifier = Modifier.animateItem()
-                    )
+                            },
+                            onLongPress = { toDeleteId = book.id }
+                        )
+                    }
                 }
             }
         }
@@ -198,11 +251,11 @@ fun HomeScreen(
             sheetState = sheetState,
             title = newTitle,
             author = newAuthor,
-            numPage = newNumPage,  // ← Usar newNumPage (String)
+            numPage = newNumPage,
             body = newBody,
             onTitleChange = { newTitle = it },
             onAuthorChange = { newAuthor = it },
-            onNumPageChange = { newNumPage = it },  // ← Actualizar newNumPage
+            onNumPageChange = { newNumPage = it },
             onBodyChange = { newBody = it },
             onCancel = {
                 showSheet = false
@@ -210,8 +263,7 @@ fun HomeScreen(
             },
             onSave = { isFav ->
                 scope.launch {
-                    // Convertir String a Int aquí
-                    val pages = newNumPage.trim().toIntOrNull() ?: 0  // ← Usar newNumPage
+                    val pages = newNumPage.trim().toIntOrNull() ?: 0
 
                     val success = booksViewModel.addBook(
                         title = newTitle.trim(),
@@ -265,6 +317,107 @@ fun HomeScreen(
         onDispose {
             if (loggingOut)
                 state.resetForLogout()
+        }
+    }
+}
+private data class FilterChipData(
+    val sortBy: SortBy,
+    val label: String,
+    val icon: ImageVector
+)
+
+@Composable
+private fun FilterChipsRow(
+    currentSortBy: SortBy,
+    onSortByChange: (SortBy) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Solo Fecha y Título (sin Favoritos)
+    val chips = listOf(
+        FilterChipData(SortBy.DATE, "Fecha", Icons.Filled.CalendarMonth),
+        FilterChipData(SortBy.TITLE, "Título", Icons.Filled.SortByAlpha)
+    )
+
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Sort,
+            contentDescription = "Ordenar por",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+
+        Text(
+            text = "Filtros:",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        chips.forEach { chip ->
+            val isSelected = currentSortBy == chip.sortBy
+
+            val containerColor by animateColorAsState(
+                targetValue = if (isSelected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                },
+                animationSpec = tween(durationMillis = 200),
+                label = "chipContainerColor"
+            )
+
+            val contentColor by animateColorAsState(
+                targetValue = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                animationSpec = tween(durationMillis = 200),
+                label = "chipContentColor"
+            )
+
+            FilterChip(
+                selected = isSelected,
+                onClick = { onSortByChange(chip.sortBy) },
+                label = {
+                    Text(
+                        text = chip.label,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = chip.icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = containerColor,
+                    labelColor = contentColor,
+                    iconColor = contentColor,
+                    selectedContainerColor = containerColor,
+                    selectedLabelColor = contentColor,
+                    selectedLeadingIconColor = contentColor
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = if (isSelected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    },
+                    selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    borderWidth = 1.dp,
+                    selectedBorderWidth = 1.dp,
+                    enabled = true,
+                    selected = isSelected
+                )
+            )
         }
     }
 }

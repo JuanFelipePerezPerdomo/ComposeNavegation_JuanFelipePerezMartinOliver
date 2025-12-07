@@ -2,15 +2,15 @@ package com.edu.dam.ui.home.components
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
@@ -19,92 +19,118 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.edu.dam.data.model.Book
 import com.edu.dam.theme.animatedFavoriteColor
 import com.edu.dam.ui.common.formatBookTimestamp
 
 @RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun BookCard(
+fun BookCard(
     book: Book,
     onOpen: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onLongPress: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val prettyDate = remember(book.updatedAt) {
         formatBookTimestamp(book.updatedAt)
     }
 
-    // Color animado para el icono favorito
     val starColor = animatedFavoriteColor(book.isFavorite)
-
-    val shape: Shape = MaterialTheme.shapes.medium
-    val containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-    val onSurface = MaterialTheme.colorScheme.onSurface
-    val bodyColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val shape = MaterialTheme.shapes.medium
 
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        onClick = onOpen,
+            .heightIn(min = 140.dp)
+            .clip(shape)
+            .combinedClickable(
+                onClick = onOpen,
+                onLongClick = onLongPress
+            ),
         shape = shape,
-        colors = CardDefaults.elevatedCardColors(containerColor = containerColor),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), shape)
-                .clip(shape),
-            color = containerColor,
-            contentColor = onSurface,
-            tonalElevation = 0.dp
-        ) {
-            Column(Modifier
-                .padding(horizontal = 16.dp, vertical = 14.dp)
-                .heightIn(min = 120.dp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                // Título
+                Text(
+                    text = book.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(end = 28.dp) // Espacio para el icono de favorito
+                )
+
+                // Número de páginas (si existe)
+                if (book.numPage > 0) {
                     Text(
-                        book.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = onSurface
+                        text = "${book.numPage}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    IconButton(onClick = onToggleFavorite) {
-                        Icon(
-                            imageVector = if (book.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
-                            contentDescription = if (book.isFavorite) "Quitar de favoritos" else "Marcar como favorito",
-                            tint = starColor
-                        )
-                    }
                 }
 
+                // Sinopsis (truncada)
                 if (book.synopsis.isNotBlank()) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(book.synopsis, style = MaterialTheme.typography.bodyMedium, color = bodyColor)
+                    Text(
+                        text = book.synopsis,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
-                Spacer(Modifier.weight(1f, fill = true))
+                // Espaciador flexible
+                Box(modifier = Modifier.weight(1f, fill = false))
+
+                // Autor y fecha
+                Text(
+                    text = "por ${book.author}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
                 Text(
-                    text = "por ${book.author} • $prettyDate",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = bodyColor,
-                    modifier = Modifier.padding(top = 10.dp)
+                    text = prettyDate,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
+
+            // Icono de favorito en la esquina superior derecha
+            IconButton(
+                onClick = onToggleFavorite,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(36.dp)
+            ) {
+                Icon(
+                    imageVector = if (book.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                    contentDescription = if (book.isFavorite) "Quitar de favoritos" else "Marcar como favorito",
+                    tint = starColor,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

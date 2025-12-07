@@ -10,16 +10,22 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODO OSCURO - Paleta Azul
+// ═══════════════════════════════════════════════════════════════════════════════
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Blue80,
+    secondary = BlueGrey80,
+    tertiary = Cyan80
 )
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODO CLARO - Paleta Naranja
+// ═══════════════════════════════════════════════════════════════════════════════
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = Orange40,
+    secondary = OrangeGrey40,
+    tertiary = Amber40
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -36,7 +42,7 @@ private val LightColorScheme = lightColorScheme(
 fun ComposeNavegationJuanFelipePerezMartinOliverTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Desactivado para usar nuestros colores personalizados
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

@@ -6,12 +6,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.edu.dam.data.AppState
+import com.edu.dam.data.prefs.ThemeMode
 import com.edu.dam.data.prefs.UserPrefsRepository
 import com.edu.dam.navigation.NavGraph
 import com.edu.dam.theme.ComposeNavegationJuanFelipePerezMartinOliverTheme
@@ -27,19 +30,29 @@ class MainActivity : ComponentActivity() {
             val nav = rememberNavController()
             val state = remember { AppState() }
             val prefs = remember { UserPrefsRepository(applicationContext) }
-            val booksViewModel: BooksViewModel = viewModel (
+            val booksViewModel: BooksViewModel = viewModel(
                 factory = BooksViewModelFactory(applicationContext)
             )
 
-            val darkMode = prefs.darkModeFlow.collectAsState(initial = false).value
+            // ═══════════════════════════════════════════════════════════════
+            // LÓGICA DE TEMA - Soporta LIGHT, DARK y SYSTEM
+            // ═══════════════════════════════════════════════════════════════
+            val themeMode by prefs.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+            val isSystemDark = isSystemInDarkTheme()
 
-            val savedName = prefs.userNameFlow.collectAsState(initial = "").value
+            val isDarkTheme = when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemDark
+            }
+
+            val savedName by prefs.userNameFlow.collectAsState(initial = "")
             LaunchedEffect(savedName) {
                 state.userName.value = savedName
             }
 
-            ComposeNavegationJuanFelipePerezMartinOliverTheme(darkTheme = darkMode) {
-                NavGraph(nav,state, prefs, booksViewModel)
+            ComposeNavegationJuanFelipePerezMartinOliverTheme(darkTheme = isDarkTheme) {
+                NavGraph(nav, state, prefs, booksViewModel)
             }
         }
     }

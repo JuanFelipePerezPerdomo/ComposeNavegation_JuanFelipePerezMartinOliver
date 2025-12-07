@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.edu.dam.theme.animatedFavoriteColor
@@ -55,11 +60,10 @@ fun DetailScreen(
     nav: NavController,
     booksViewModel: BooksViewModel,
     id: String
-){
+) {
     val noteState by booksViewModel.observeBook(id).collectAsState(initial = null)
     val currentBook = noteState
 
-    val shortId = rememberCoroutineScope()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -79,6 +83,11 @@ fun DetailScreen(
 
     val starTint = animatedFavoriteColor(currentBook?.isFavorite == true)
 
+    // ID corto para mostrar en el título (primeros 8 caracteres)
+    val shortId = remember(id) {
+        if (id.length > 8) id.take(8) else id
+    }
+
     LaunchedEffect(currentBook?.id) {
         editTitle = currentBook?.title.orEmpty()
         editSynopsis = currentBook?.synopsis.orEmpty()
@@ -90,7 +99,7 @@ fun DetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Detalle #$shortId") },
+                title = { Text(currentBook?.title ?: "Detalle #$shortId") },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -118,7 +127,7 @@ fun DetailScreen(
                         IconButton(onClick = { showConfirm = true }) {
                             Icon(
                                 Icons.Filled.Delete,
-                                contentDescription = "Eliminar nota",
+                                contentDescription = "Eliminar libro",
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -126,39 +135,88 @@ fun DetailScreen(
                 }
             )
         }
-    ) {innerPadding ->
+    ) { innerPadding ->
         Column(
             Modifier
                 .padding(innerPadding)
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (currentBook == null) {
-                Text("Nota no encontrada", style = MaterialTheme.typography.titleLarge)
+                Text("Libro no encontrado", style = MaterialTheme.typography.titleLarge)
                 OutlinedButton(onClick = { nav.popBackStack() }) { Text("Volver") }
             } else {
                 val book = currentBook
-                // Título
-                Text(book.title, style = MaterialTheme.typography.headlineSmall)
 
-                // Meta
+                // ═══════════════════════════════════════════════════════════
+                // AUTOR
+                // ═══════════════════════════════════════════════════════════
                 Text(
-                    text = "por ${book.author} • $prettyDate",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append("Autor: ")
+                        }
+                        append(book.author)
+                    },
+                    style = MaterialTheme.typography.bodyLarge
                 )
-                Spacer(Modifier.height(10.dp))
-                // Cuerpo
+
+                // ═══════════════════════════════════════════════════════════
+                // NÚMERO DE PÁGINAS
+                // ═══════════════════════════════════════════════════════════
+                Text(
+                    buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append("Número de páginas: ")
+                        }
+                        append(if (book.numPage > 0) book.numPage.toString() else "No especificado")
+                    },
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                // ═══════════════════════════════════════════════════════════
+                // SINOPSIS
+                // ═══════════════════════════════════════════════════════════
+                Text(
+                    text = "Sinopsis:",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
                 if (book.synopsis.isNotBlank()) {
-                    Text(book.synopsis, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = book.synopsis,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 } else {
                     Text(
-                        "Esta nota no tiene contenido.",
+                        text = "Este libro no tiene sinopsis.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
+
+                Spacer(Modifier.height(16.dp))
+
+                // ═══════════════════════════════════════════════════════════
+                // FECHA (al final, más sutil)
+                // ═══════════════════════════════════════════════════════════
+                Text(
+                    text = "Última actualización: $prettyDate",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
             }
         }
     }
@@ -188,18 +246,24 @@ fun DetailScreen(
                         synopsis = editSynopsis.trim().ifBlank { null },
                         numPage = editNumPage
                     )
-                    // ... resto del código
+                    if (success) {
+                        showEdit = false
+                        snackbarHostState.showSnackbar("Libro actualizado")
+                    } else {
+                        snackbarHostState.showSnackbar("No se pudo guardar")
+                    }
                 }
             },
             onDismissRequest = { showEdit = false }
         )
     }
+
     if (showConfirm && currentBook != null) {
         val book = currentBook
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            title = { Text("Eliminar nota") },
-            text = { Text("¿Seguro que quieres eliminarla? Esta acción no se puede deshacer.") },
+            title = { Text("Eliminar libro") },
+            text = { Text("¿Seguro que quieres eliminarlo? Esta acción no se puede deshacer.") },
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
@@ -207,7 +271,7 @@ fun DetailScreen(
                         showConfirm = false
                         if (success) {
                             nav.popBackStack()
-                            snackbarHostState.showSnackbar("Nota eliminada")
+                            snackbarHostState.showSnackbar("Libro eliminado")
                         } else {
                             snackbarHostState.showSnackbar("No se pudo eliminar")
                         }

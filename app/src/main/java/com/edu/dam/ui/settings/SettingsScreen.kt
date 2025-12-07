@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -18,6 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +34,9 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,12 +50,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.edu.dam.data.AppState
-import com.edu.dam.data.prefs.SortBy
+import com.edu.dam.data.prefs.ThemeMode
 import com.edu.dam.data.prefs.UserPrefsRepository
 import com.edu.dam.navigation.Settings
 import com.edu.dam.ui.common.UserNameSupportingText
@@ -66,14 +73,11 @@ fun SettingsScreen(
 ) {
     val currentName by state.userName.collectAsState()
     val savedName by prefs.userNameFlow.collectAsState(initial = "")
-    val currentDark by prefs.darkModeFlow.collectAsState(initial = false)
-    val currentSort by prefs.sortByFlow.collectAsState(initial = SortBy.DATE)
+    val currentThemeMode by prefs.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
     val scope = rememberCoroutineScope()
     var tempName by rememberSaveable { mutableStateOf("") }
-    var tempDark by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(savedName) { tempName = savedName }
-    LaunchedEffect(currentDark) { tempDark = currentDark }
 
     val validation = remember(tempName) { validateUserName(tempName) }
     val trimmed = validation.trimmed
@@ -105,6 +109,9 @@ fun SettingsScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // ═══════════════════════════════════════════════════════════════
+            // PERFIL
+            // ═══════════════════════════════════════════════════════════════
             Text("Perfil", style = MaterialTheme.typography.titleMedium)
 
             OutlinedTextField(
@@ -135,7 +142,8 @@ fun SettingsScreen(
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-            // Botones
+
+            // Botones de perfil
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = {
@@ -153,7 +161,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { tempName = currentName }, // revertir cambios locales
+                        onClick = { tempName = currentName },
                         enabled = hasChanges,
                         modifier = Modifier.weight(1f)
                     ) { Text("Revertir") }
@@ -170,53 +178,24 @@ fun SettingsScreen(
                 ) { Text("Cancelar") }
             }
 
-            SettingsSection(
-                title = "Orden de notas",
-                subtitle = "Define cómo se listan tus notas en la pantalla principal"
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SortOption(
-                        label = "Por fecha (recientes primero)",
-                        selected = currentSort == SortBy.DATE,
-                        onSelect = { scope.launch { prefs.setSortBy(SortBy.DATE) } }
-                    )
-                    SortOption(
-                        label = "Por título (A–Z)",
-                        selected = currentSort == SortBy.TITLE,
-                        onSelect = { scope.launch { prefs.setSortBy(SortBy.TITLE) } }
-                    )
-                    SortOption(
-                        label = "Favoritas primero",
-                        selected = currentSort == SortBy.FAVORITE,
-                        onSelect = { scope.launch { prefs.setSortBy(SortBy.FAVORITE) } }
-                    )
-                }
-            }
+            // ═══════════════════════════════════════════════════════════════
+            // TEMA DE LA APLICACIÓN - 3 opciones: Claro, Oscuro, Sistema
+            // ═══════════════════════════════════════════════════════════════
             SettingsSection(
                 title = "Tema de la aplicación",
-                subtitle = "Activa el modo oscuro en todos los apartados"
+                subtitle = "Selecciona el modo de visualización"
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Tema oscuro", style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            "Afecta a las pantallas Home, Favoritos y Ajustes.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                ThemeModeSelector(
+                    currentMode = currentThemeMode,
+                    onModeChange = { mode ->
+                        scope.launch { prefs.setThemeMode(mode) }
                     }
-                    Switch(
-                        checked = tempDark,
-                        onCheckedChange = { checked ->
-                            tempDark = checked
-                            scope.launch { prefs.setDarkMode(checked) }
-                        }
-                    )
-                }
+                )
             }
+
+            // ═══════════════════════════════════════════════════════════════
+            // MENSAJE DE BIENVENIDA
+            // ═══════════════════════════════════════════════════════════════
             SettingsSection(
                 title = "Mensaje de bienvenida",
                 subtitle = "Controla si quieres volver a ver la introducción"
@@ -249,24 +228,78 @@ fun SettingsScreen(
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SELECTOR DE TEMA - 3 botones segmentados
+// ═══════════════════════════════════════════════════════════════════════════════
+
+private data class ThemeModeOption(
+    val mode: ThemeMode,
+    val label: String,
+    val icon: ImageVector
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SortOption(
-    label: String,
-    selected: Boolean,
-    onSelect: () -> Unit
+private fun ThemeModeSelector(
+    currentMode: ThemeMode,
+    onModeChange: (ThemeMode) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+    val options = listOf(
+        ThemeModeOption(ThemeMode.LIGHT, "Claro", Icons.Filled.LightMode),
+        ThemeModeOption(ThemeMode.DARK, "Oscuro", Icons.Filled.DarkMode),
+        ThemeModeOption(ThemeMode.SYSTEM, "Sistema", Icons.Filled.PhoneAndroid)
+    )
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        RadioButton(
-            selected = selected,
-            onClick = onSelect
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            options.forEachIndexed { index, option ->
+                SegmentedButton(
+                    selected = currentMode == option.mode,
+                    onClick = { onModeChange(option.mode) },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size
+                    ),
+                    icon = {
+                        SegmentedButtonDefaults.Icon(active = currentMode == option.mode) {
+                            Icon(
+                                imageVector = option.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                            )
+                        }
+                    }
+                ) {
+                    Text(option.label)
+                }
+            }
+        }
+
+        // Texto descriptivo según el modo seleccionado
+        val description = when (currentMode) {
+            ThemeMode.LIGHT -> "La interfaz usará colores claros siempre"
+            ThemeMode.DARK -> "La interfaz usará colores oscuros siempre"
+            ThemeMode.SYSTEM -> "El tema seguirá la configuración de tu dispositivo"
+        }
+
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            modifier = Modifier.padding(horizontal = 4.dp)
         )
-        Spacer(Modifier.width(8.dp))
-        Text(label)
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE REUTILIZABLE - Sección de ajustes
+// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun SettingsSection(
