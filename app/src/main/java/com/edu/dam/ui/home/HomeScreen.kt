@@ -184,9 +184,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ═══════════════════════════════════════════════════════════════
-            // GRID DE LIBROS - 3 columnas
-            // ═══════════════════════════════════════════════════════════════
             if (sortedBooks.isEmpty()) {
                 Column(
                     modifier = Modifier

@@ -109,9 +109,6 @@ fun SettingsScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ═══════════════════════════════════════════════════════════════
-            // PERFIL
-            // ═══════════════════════════════════════════════════════════════
             Text("Perfil", style = MaterialTheme.typography.titleMedium)
 
             OutlinedTextField(
@@ -178,9 +175,6 @@ fun SettingsScreen(
                 ) { Text("Cancelar") }
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // TEMA DE LA APLICACIÓN - 3 opciones: Claro, Oscuro, Sistema
-            // ═══════════════════════════════════════════════════════════════
             SettingsSection(
                 title = "Tema de la aplicación",
                 subtitle = "Selecciona el modo de visualización"
@@ -193,9 +187,6 @@ fun SettingsScreen(
                 )
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // MENSAJE DE BIENVENIDA
-            // ═══════════════════════════════════════════════════════════════
             SettingsSection(
                 title = "Mensaje de bienvenida",
                 subtitle = "Controla si quieres volver a ver la introducción"
@@ -227,10 +218,6 @@ fun SettingsScreen(
         }
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SELECTOR DE TEMA - 3 botones segmentados
-// ═══════════════════════════════════════════════════════════════════════════════
 
 private data class ThemeModeOption(
     val mode: ThemeMode,
@@ -296,10 +283,6 @@ private fun ThemeModeSelector(
         )
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// COMPONENTE REUTILIZABLE - Sección de ajustes
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun SettingsSection(

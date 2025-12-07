@@ -34,9 +34,6 @@ class MainActivity : ComponentActivity() {
                 factory = BooksViewModelFactory(applicationContext)
             )
 
-            // ═══════════════════════════════════════════════════════════════
-            // LÓGICA DE TEMA - Soporta LIGHT, DARK y SYSTEM
-            // ═══════════════════════════════════════════════════════════════
             val themeMode by prefs.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
             val isSystemDark = isSystemInDarkTheme()
 

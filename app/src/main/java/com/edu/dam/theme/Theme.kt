@@ -10,18 +10,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MODO OSCURO - Paleta Azul
-// ═══════════════════════════════════════════════════════════════════════════════
+// MODO OSCURO
 private val DarkColorScheme = darkColorScheme(
     primary = Blue80,
     secondary = BlueGrey80,
     tertiary = Cyan80
 )
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MODO CLARO - Paleta Naranja
-// ═══════════════════════════════════════════════════════════════════════════════
+// MODO CLARO
 private val LightColorScheme = lightColorScheme(
     primary = Orange40,
     secondary = OrangeGrey40,

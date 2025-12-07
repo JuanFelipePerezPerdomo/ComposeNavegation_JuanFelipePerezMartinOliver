@@ -149,9 +149,6 @@ fun DetailScreen(
             } else {
                 val book = currentBook
 
-                // ═══════════════════════════════════════════════════════════
-                // AUTOR
-                // ═══════════════════════════════════════════════════════════
                 Text(
                     buildAnnotatedString {
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -162,9 +159,6 @@ fun DetailScreen(
                     style = MaterialTheme.typography.bodyLarge
                 )
 
-                // ═══════════════════════════════════════════════════════════
-                // NÚMERO DE PÁGINAS
-                // ═══════════════════════════════════════════════════════════
                 Text(
                     buildAnnotatedString {
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -184,9 +178,6 @@ fun DetailScreen(
 
                 Spacer(Modifier.height(8.dp))
 
-                // ═══════════════════════════════════════════════════════════
-                // SINOPSIS
-                // ═══════════════════════════════════════════════════════════
                 Text(
                     text = "Sinopsis:",
                     style = MaterialTheme.typography.titleMedium,
